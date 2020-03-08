@@ -13,6 +13,9 @@ import re
 
 class YTdownloader():
     def __init__(self):
+        """
+        Constructor
+        """
         self.url=args.url
         self.path=args.path
         self.size=0
@@ -22,40 +25,94 @@ class YTdownloader():
             self.yt=YouTube(self.url)
         except RegexMatchError:
             self.playlist=True
-            self.yt=Playlist(self.url)
+            self.pl=Playlist(self.url)
         self.filename="pouet"
-    
-    def _downloader(self):
-        if os.path.exists(self.path)==False:
-            os.makedirs(self.path)
-            
-        if self.playlist==False:
-            self.filename=self._getname()
-            self.yt.streams.filter(only_audio=True, file_extension = "mp4").first().download(output_path=self.path, filename="temp")
-            mp4 = self.path+"/"+"temp.mp4"
-            mp3 = self.path+"/"+"temp.mp3"
-            ffmpeg = ('ffmpeg -i %s ' % mp4 + mp3)
-            subprocess.run(ffmpeg, stderr=subprocess.DEVNULL)#No display in console
-            os.rename(mp3,self.path+"/"+self.filename)
-            os.remove(mp4)
-            print(self.filename+" ... downloaded")
-        else:
-            for video in self.yt:
-                self.size= self.size + YouTube(video).streams.filter(only_audio=True, file_extension = "mp4").first().filesize
-                self.nb_song=self.nb_song+1
-            print(str(self.nb_song)+" song detected in the playlist")
         
     def _getname(self):
-       filename=(str(self.yt.streams.filter(only_audio=True).first().title)+".mp3")
-       filename = re.sub('[^A-Za-z0-9. \-_]+', '', filename)#Remove special caractère
-       return filename
+        """
+        Method to get the name of the video without special characters
+        @attributs:
+            self.yt     -required : YouTube() object containing the link of the video
+        """
+        filename=(str(self.yt.title)+".mp3")
+        filename = re.sub('[^A-Za-z0-9. \-_]+', '', filename)#Remove special caractère
+        if filename=="Youtube.mp3":
+            filename=str(self.yt.author)+str(self.yt.views)+".mp3"
+        return filename
    
     def _iter(self):
+        """
+        Method to iterate download
+        @attributs:
+            self.yt     -required : YouTube() object containing the link of the video
+            self.path   -required : Path will contain the song 
+        """
         if os.path.exists(self.path)==False:
             os.makedirs(self.path)
-    
+        # Just one song
+        if self.playlist==False:
+            self._download()
+            print(self.filename+" ... downloaded")
+        # Playlist containing several songs
+        else:
+            self.nb_song=len(self.pl)
+            self._printProgressBar(0, self.nb_song, prefix = 'Loading Playlist:', suffix = 'Completed', length = 50)
+            count=0
+            for video in self.pl:
+                self.size= self.size + YouTube(video).streams.filter(only_audio=True, file_extension = "mp4").first().filesize
+                count=count+1
+                self._printProgressBar(count, self.nb_song, prefix = 'Loading Playlist:', suffix = 'Completed', length = 50)
+            print('\n')
+            print(str(self.nb_song)+" song detected in the playlist, it require approximately "+ str(self.size*1e-6)+"Mb")
+            print('\n')
+            self._printProgressBar(0, self.size, prefix = 'Progress:', suffix = 'Complete', length = 50)
+            size_temp=0
+            for video in self.pl:
+                self.yt=YouTube(video)
+                size_temp= size_temp + self.yt.streams.filter(only_audio=True, file_extension = "mp4").first().filesize
+                self._download()
+                # print(self.filename+" ... downloaded")
+                self._printProgressBar(size_temp, self.size, prefix = 'Progress:', suffix = 'Completed', length = 50)
+            
     def _download(self):
+        """
+        Method to download audio from a video link (youtube) in mp3.
+        @attributs:
+            self.yt     -required : YouTube() object containing the link of the video
+            self.path   -required : Path will contain the song 
+        """
+        self.filename=self._getname()
+        self.yt.streams.filter(only_audio=True, file_extension = "mp4").first().download(output_path=self.path, filename="temp")
+        mp4 = self.path+"/"+"temp.mp4"
+        mp3 = self.path+"/"+"temp.mp3"
+        ffmpeg = ('ffmpeg -i %s ' % mp4 + mp3)
+        subprocess.run(ffmpeg, stderr=subprocess.DEVNULL)#No display in console
+        filename=self.filename
+        if filename=="Youtube.mp3":
+            filename=str(self.yt.author)+str(self.yt.views)+".mp3"
+        os.rename(mp3,self.path+"/"+filename)
+        os.remove(mp4)
         
+    def _printProgressBar(self, iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+        """
+        Call in a loop to create terminal progress bar
+        @params:
+            iteration   - Required  : current iteration (Int)
+            total       - Required  : total iterations (Int)
+            prefix      - Optional  : prefix string (Str)
+            suffix      - Optional  : suffix string (Str)
+            decimals    - Optional  : positive number of decimals in percent complete (Int)
+            length      - Optional  : character length of bar (Int)
+            fill        - Optional  : bar fill character (Str)
+            printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+        """
+        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+        filledLength = int(length * iteration // total)
+        bar = fill * filledLength + '-' * (length - filledLength)
+        print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = printEnd)
+        # Print New Line on Complete
+        if iteration == total: 
+            print()
        
 if __name__ == '__main__':
 
@@ -67,23 +124,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     tool=YTdownloader()
-    tool._downloader()
+    tool._iter()
 
 
-#  https://www.youtube.com/watch?v=9bZkp7q19f0
+# https://www.youtube.com/watch?v=9bZkp7q19f0
 # https://www.youtube.com/playlist?list=PLDKnWFJufFAElSOvCm39Z2mgcmr4KXo3j
 
-# yt=YouTube("https://www.youtube.com/watch?v=9bZkp7q19f0")
-# filename=(str(yt.streams.filter(only_audio=True).first().title)+".mp3")
-# filename = str(filename.encode('latin-1', "replace")).replace("'","").replace("?","")
-# path="D:/Téléchargements" 
-# mp3 = "temp.mp3"
-# os.rename(path+"/"+mp3,path+"/"+filename)
-# test=filename.encode('latin-1')
-    
-# yt=Playlist("https://www.youtube.com/playlist?list=PLDKnWFJufFAElSOvCm39Z2mgcmr4KXo3j")
-# size=0
-# nb_song=0
-# for video in yt:
-#     size=size + YouTube(video).streams.filter(only_audio=True, file_extension = "mp4").first().filesize
-#     nb_song=nb_song+1
+dataiter=iter(trainloader)
