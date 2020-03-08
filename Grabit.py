@@ -65,14 +65,16 @@ class YTdownloader():
             print('\n')
             print(str(self.nb_song)+" song detected in the playlist, it require approximately "+ str(self.size*1e-6)+"Mb")
             print('\n')
-            self._printProgressBar(0, self.size, prefix = 'Progress:', suffix = 'Complete', length = 50)
+            self._printProgressBar(0, self.size, prefix = 'Download progress:', suffix = 'Complete', length = 50)
             size_temp=0
             for video in self.pl:
                 self.yt=YouTube(video)
                 size_temp= size_temp + self.yt.streams.filter(only_audio=True, file_extension = "mp4").first().filesize
                 self._download()
                 # print(self.filename+" ... downloaded")
-                self._printProgressBar(size_temp, self.size, prefix = 'Progress:', suffix = 'Completed', length = 50)
+                self._printProgressBar(size_temp, self.size, prefix = 'Download progress:', suffix = 'Completed', length = 50)
+        print('\n')
+        print("Pouet")
             
     def _download(self):
         """
