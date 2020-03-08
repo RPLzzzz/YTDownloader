@@ -1,5 +1,9 @@
 # YTDownloader
 
+Download your favorite song & playlist from youtube. In future soundcloud should be supported.
+
+![logo](https://i.imgur.com/4ZCyjGS.png)
+
 ## How to use it ?
 Windows user
 + First, you should have install anaconda (https://docs.anaconda.com/anaconda/install/windows/) & update conda with the Anaconda prompt console :
