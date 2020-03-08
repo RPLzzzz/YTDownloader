@@ -88,7 +88,7 @@ class YTdownloader():
         ffmpeg = ('ffmpeg -i %s ' % mp4 + mp3)
         subprocess.run(ffmpeg, stderr=subprocess.DEVNULL)#No display in console
         filename=self.filename
-        if filename=="Youtube.mp3":
+        if filename=="Youtube.mp3" or filename=="YouTube.mp3" :
             filename=str(self.yt.author)+str(self.yt.views)+".mp3"
         os.rename(mp3,self.path+"/"+filename)
         os.remove(mp4)
@@ -130,4 +130,3 @@ if __name__ == '__main__':
 # https://www.youtube.com/watch?v=9bZkp7q19f0
 # https://www.youtube.com/playlist?list=PLDKnWFJufFAElSOvCm39Z2mgcmr4KXo3j
 
-dataiter=iter(trainloader)
